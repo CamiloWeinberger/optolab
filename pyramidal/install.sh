@@ -1,20 +1,15 @@
-# check if conda environmet is installed
-if [ -z "$CONDA_PREFIX" ]; then
-    echo "Conda environment is not installed. Please install conda environment first."
+# check if conda is installed
+if ! which conda > /dev/null; then
+    echo "conda is not installed! please install anaconda first"
     exit 1
 fi
-# install environment or update if already installed
-if [ -d "$CONDA_PREFIX/envs/pytorch-env" ]; then
-    echo "Updating pytorch-env environment"
-    conda env update -n pytorch-env -f environment.yml
-else
-    echo "Installing pytorch-env environment"
-    conda env create -n pytorch-env -f environment.yml
+# check if environment pyramidal is already installed if not is installed install it with environment.yml file
+if ! conda env list | grep -q "^pyramidal "; then
+    echo "Installinng pyramidal environment..."
+    conda env create -f env.yml
 fi
-# check if pyramidal package python is installed
-if [ -z "$PYRAMIDAL_PYTHON" ]; then
-    echo "Pyramidal package python is not installed. Please install pyramidal package python first."
-    # install it
-    pip install -e .
+# check if environment is activated if not activate it
+if ! conda info --envs | grep -q "^\* pyramidal "; then
+    echo "Activating pyramidal environment..."
+    conda activate pyramidal
 fi
-
