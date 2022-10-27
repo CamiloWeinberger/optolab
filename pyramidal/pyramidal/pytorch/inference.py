@@ -11,11 +11,10 @@ import mlflow.pytorch
 from pyramidal.pytorch.Utils.mlflow_utils import get_tracking_uri
 
 
-def load_model_from_mlflow(*, project='pyramidal', datavariant='baseline', modelName=None, what_choice='best'):
+def load_model_from_mlflow(*, project='pyramidal', datavariant='54', modelName=None, what_choice='best'):
   """
   Load a model from mlflow
   This function is used to load a model from mlflow
-
   Steps:
   1. Choose the model to load (best or last)
   2. Select the run_id chosen
@@ -29,7 +28,6 @@ def load_model_from_mlflow(*, project='pyramidal', datavariant='baseline', model
   mlflow.set_tracking_uri(mlflow_tracking_uri)
   # for this example we use random run id from mlflow
   # get random run id
-  name = f'{project} {datavariant}'
   exp = mlflow.get_experiment_by_name(f'{project} {datavariant}')
   # get all metrics for all runs
   order_by = 'metrics.loss_val ASC' if what_choice == 'best' else 'metrics.end_time DESC'
@@ -43,8 +41,15 @@ def load_model_from_mlflow(*, project='pyramidal', datavariant='baseline', model
     order_by=[order_by],
     max_results=1,
   )
-  run_id = metrics.iloc[0].run_id
 
+  return import_model_from_mlflow(metrics.iloc[0], project)
+
+
+def import_model_from_mlflow(run, project='pyramidal'):
+  run_id = run.run_id
+  datavariant = run['params.datavariant']
+
+  name = f'{project} {datavariant}'
   # download artifact
   artifact_uri = f'runs:/{run_id}/parameters'
   if exists(f'/tmp/mlflow/inference/{name}/parameters'):
@@ -80,18 +85,18 @@ def load_model_from_mlflow(*, project='pyramidal', datavariant='baseline', model
   # configure data flow for inference
   values_normalize_head = None
   values_normalize_tail = None
-  if metrics.iloc[0]['params.normalize_head'] != 'none':
+  if run['params.normalize_head'] != 'none':
     file_npy = glob(f'/tmp/mlflow/inference/{name}/parameters/parameters/*head*.npy')[0]
     values_normalize_head = np.load(file_npy)
-  if metrics.iloc[0]['params.normalize_tail'] != 'none':
+  if run['params.normalize_tail'] != 'none':
     file_npy = glob(f'/tmp/mlflow/inference/{name}/parameters/parameters/*tail*.npy')[0]
     values_normalize_tail = np.load(file_npy)
   from generator import Generator
   Generator.values_normalize_head = values_normalize_head
   Generator.values_normalize_tail = values_normalize_tail
   gen = Generator(
-    normalize_head=metrics.iloc[0]['params.normalize_head'],
-    normalize_tail=metrics.iloc[0]['params.normalize_tail'],
+    normalize_head=run['params.normalize_head'],
+    normalize_tail=run['params.normalize_tail'],
     is_train=False
   )
   return model, gen.flow
@@ -100,5 +105,5 @@ def load_model_from_mlflow(*, project='pyramidal', datavariant='baseline', model
 
 if __name__ == '__main__':
   import os
-  os.chdir('testTemplate')
-  load_model_from_mlflow(what_choice='last')
+  # os.chdir('testTemplate')
+  load_model_from_mlflow(what_choice='best')
