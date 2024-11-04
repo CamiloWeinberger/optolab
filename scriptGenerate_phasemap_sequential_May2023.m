@@ -30,14 +30,14 @@ end
 
 
 %[0.01 0.02 0.04 0.06 0.08 0.1]
-for D = 1.5% [2.5 4 12 25.5 42]
-    carpeta  = ['Dataset_Phasemap/Datasets_phasemap_D' num2str(D) '_sequential_Jun_2023' name_var '_experimental'];
+for D = .5% [2.5 4 12 25.5 42]
+    carpeta  = ['../Dataset_Phasemap/Datasets_phasemap_D' num2str(D) '_sequential_Jun_2023' name_var '_experimental'];
 
     if ~exist(carpeta)
         mkdir(carpeta)
     end
     
-    for r0 = [.03 .04 .05] %[.15 .16 .18]
+    for r0 = [.03125 .125 .0625] %[.15 .16 .18]
         [X_phase,Y_z] = Generate_phasemap_sequential(N,jIndex,r0,resol,D, sampling);
 
         
